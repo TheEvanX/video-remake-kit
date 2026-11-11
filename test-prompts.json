@@ -1,0 +1,101 @@
+{
+  "skill": "video-recreate",
+  "version": "0.3.2",
+  "source_book": "N/A — engineering skill",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "把这份 breakdown.json 的镜头生成 AI 复刻任务，先做 dry-run 预检",
+      "expected_behavior": "激活 video-recreate，生成 manifest/jobs 后执行 --dry-run，明确说明 network_calls=0、未扣费",
+      "notes": "典型的清单转任务场景"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我填好了方舟的模型 ID，先用我自己的 Key 只生成第 1 个镜头试试",
+      "expected_behavior": "激活 video-recreate，要求 Key 走环境变量或隐藏输入，先跑 --only 1 --execute，失败时复用 task_id 而不重提",
+      "notes": "付费执行场景，需体现单次试生成与幂等"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "我用的是另一家视频模型 API，怎么配字段映射？",
+      "expected_behavior": "激活 video-recreate，指向 assets/video-api.generic.example.json 与 references/video-api.md，说明 submit_path / status_path / task_id_field 等映射",
+      "notes": "供应商适配场景"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "帮我从这个抖音链接拆解镜头、抽首尾帧，再生成复刻任务",
+      "expected_behavior": "激活 video-recreate，先 fetch_source.py --dry-run 再执行，build_breakdown.py --promote 产出 breakdown.json，并明确提示自动标签只是候选、AI 适配性仍需人工复核",
+      "notes": "链接入口 + 视觉拆解 + 晋级门，v0.3.0 的核心场景"
+    },
+    {
+      "id": "should-trigger-05",
+      "type": "should_trigger",
+      "prompt": "看看这份拆解清单里哪些镜头能进 AI 生成任务，哪些还得人工处理",
+      "expected_behavior": "激活 video-recreate，跑 promotion_gate.py --breakdown ... --out report.json 出只读晋级报告，说明 candidates / demoted / assumed_suitability 的含义，不修改输入文件、不联网、不付费",
+      "notes": "晋级门诊断场景：先报告后验证，符合用户的调试习惯"
+    },
+    {
+      "id": "should-trigger-06",
+      "type": "should_trigger",
+      "prompt": "我有自己的视频号解析服务，怎么把链接接进复刻流程？",
+      "expected_behavior": "激活 video-recreate，指向 references/source-intake.md 的外部下载器契约：video-downloader 用 {out_dir} 对应它的 --output-dir（不是 {out} 单文件），必须带 --asr none --vision none、不能加 --metadata-only；WX_CHANNELS_API_URL / WX_CHANNELS_COOKIE 由适配器自己读取，本 skill 不保存凭据；先跑 --dry-run 再接 build_breakdown.py",
+      "notes": "v0.3.2 的目录型适配器对接场景"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "帮我把这个视频的字幕提取出来，总结一下讲了什么",
+      "expected_behavior": "不应激活 video-recreate，应激活 video-downloader 或 cangjie-skill",
+      "notes": "跨 skill 混淆诱饵：本 skill 会下载视频、会对齐转写，但只把转写当作分镜提示词的语义输入，不做内容摘要或方法论总结"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "把这个访谈视频里的方法论蒸馏成一个可以被 Agent 调用的 skill",
+      "expected_behavior": "不应激活 video-recreate，应激活 cangjie-skill",
+      "notes": "跨 skill 混淆诱饵：语义蒸馏与视觉复刻是两条不同轨道"
+    },
+    {
+      "id": "should-not-trigger-03",
+      "type": "should_not_trigger",
+      "prompt": "用 ffmpeg 把这三段 mp4 拼起来并加个转场",
+      "expected_behavior": "不应激活 video-recreate 的生成流程；应说明装配不在本包内，需自备装配工具",
+      "notes": "看似相关的诱饵：本包不含装配脚本"
+    },
+    {
+      "id": "should-not-trigger-04",
+      "type": "should_not_trigger",
+      "prompt": "帮我把这个视频下载到电脑里就行，不用做别的",
+      "expected_behavior": "不应把本 skill 当通用下载器使用，应激活 video-downloader 等下载工具；本包的链接入口只为后续视觉拆解服务",
+      "notes": "边界诱饵：下载是 Stage 0 的手段，不是本 skill 的交付物"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我只有一个视频文件，直接帮我复刻成 AI 视频",
+      "expected_behavior": "可以激活：用 fetch_source.py 接本地文件、build_breakdown.py 切镜抽帧、--promote 给候选标签。但必须说明自动拆解只给边界与首尾帧，AI 适配性要人工复核，且本包不含成片装配；不得承诺「一键成片」",
+      "notes": "边界：v0.2.0 起已能从视频直接产出 breakdown.json，但上下游缺口与人工复核仍是硬约束"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "直接拿这条微信视频号链接一键复刻成片",
+      "expected_behavior": "可以激活，但必须说明视频号解析是实验性能力：本包不实现微信客户端自动化、不保存 Cookie，需外部适配器或手动保存为本地 mp4；且装配不在包内。不得承诺「一键成片」或自动登录",
+      "notes": "边界：平台能力边界 + 上下游缺口，双重诚实声明"
+    },
+    {
+      "id": "edge-03",
+      "type": "edge_case",
+      "prompt": "把所有镜头都自动判定成 AI 生成，别让我一个个复核了，直接跑",
+      "expected_behavior": "不得直接照做。应说明晋级门只验证客观可执行性、不判断实拍/录屏/UI 文字是否适合重生成；可用 --assume-ai-video 但必须明确警告它跳过证据检查，且 --accept-fallback 仍需用户确认。不得把 assumed 表述为已验证",
+      "notes": "边界：拒绝把「机器判不了的事」包装成已自动化，这是晋级门的设计底线"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "格式沿用 cangjie-skill templates/test-prompts.json.template。全部 should_not_trigger 必须通过（诱饵容错为 0），其中 2 条为跨 skill 混淆测试。"
+}

@@ -1,0 +1,70 @@
+{
+  "skill": "video-recreate",
+  "version": "0.3.2",
+  "source_package": "video-recreate-workbuddy-v0.1.0.zip",
+  "updated_at": "2026-11-11",
+  "python_min": "3.10",
+  "external_binaries": ["ffmpeg", "ffprobe"],
+  "optional_binaries": ["yt-dlp"],
+  "python_dependencies": [],
+  "changes": {
+    "0.1.1": [
+      "ark 请求的 duration 规范为整数秒，非整数时长明确拒绝",
+      "ratio 先约简再按 supported_ratios 校验，支持 ratio_aliases 显式映射",
+      "预检逐镜头收集全部错误并带 shot 号；任一镜头有错则整批不提交、不索要 Key",
+      "中文 fallback 提示词不再夹英文，比例用约简值，时长描述不再与 API duration 冲突",
+      "build_recreation_jobs 支持 --min-duration，移除未使用的 output_dir，保留非 AI 路线的复核提示词",
+      "configure_video_api 改为默认非交互（Windows 下 isatty 不可靠），需 --interactive 才提问",
+      "新增 scripts/doctor.py、test_build_scripts.py、test-prompts.json、references/breakdown-schema.md、references/integration-cangjie.md",
+      "统一脚本路径，声明 ffmpeg/ffprobe 依赖，重写 references/recreate-schema.md"
+    ],
+    "0.2.0": [
+      "新增 Stage 0：scripts/fetch_source.py 把视频链接或本地文件转成 source.json，支持 yt-dlp 与外部下载器适配器",
+      "新增 scripts/build_breakdown.py：ffmpeg 场景切镜、逐镜首尾帧抽取、转写按时间窗对齐，产出 breakdown.json",
+      "转写文本只进入 fallback 提示词的语义句子，不写进已复核提示词来源，复核门保持有效",
+      "自动切镜默认 base.label=unknown（manual_review）；--assume-ai-video 需显式开启并打印警告",
+      "微信视频号链接不直接下载：需外部适配器或手动保存本地文件，不实现微信自动化、不保存 Cookie",
+      "doctor 增加 yt-dlp 与 source.json 检查；新增 references/source-intake.md 平台矩阵与合规说明",
+      "新增 scripts/test_intake_scripts.py，扩充 test-prompts.json 的链接入口触发/诱饵用例"
+    ],
+    "0.3.0": [
+      "新增 scripts/promotion_gate.py：把 cangjie 三重验证 V1/V2/V3 与晋级门五判据映射为镜头级纯函数",
+      "build_breakdown.py --promote 让客观证据齐备的镜头自动成为 ai_video 候选，其余留 manual_review 并写明缺失项；与 --assume-ai-video 互斥",
+      "build_recreation_manifest.py 默认开启晋级硬门槛，不合格镜头降级且写入 summary.unresolved，不生成付费任务",
+      "新增 --gate-config / --gate-policy / --gate-report / --no-gate，与 video_api.py 共用一套时长、比例、尾帧约束",
+      "新增 promotion_gate.py 只读候选探测报告 CLI，未标 label 的镜头会给出 candidates / demoted / fix_hints，不修改输入文件",
+      "V3（AI 适配性）只告警不拦截，自动标签一律标 v3_status=assumed，仍须人工复核与 --accept-fallback 确认",
+      "manifest 新增 shots[].promotion 与 summary.promotion；降级镜头保留提示词、素材、包装与音效事件，不静默丢弃",
+      "新增 references/promotion-gate.md、scripts/test_promotion_gate.py，扩充 test_intake_scripts.py 的 --promote 端到端用例"
+    ],
+    "0.3.1": [
+      "尾帧抽取增加回退重试：真实 20s MP4 的 end-0.05 越过最后可解码帧会静默丢尾帧；失败不再留下零字节文件，实际时间点写入 shots[].frame_times",
+      "默认 --max-shot-s 从 30 收紧到 10；无硬切的长镜头按模型 max_duration_s 上限自动分段，provenance 记录 forced_splits 与 effective_max_shot_s",
+      "自动分段不允许切出短于模型 min_duration_s 的碎片，否则保留原窗口交由晋级门列明时长缺口",
+      "新增 --cuts 人工切点入口：复核后的精确边界可替代场景检测，provenance 记录 cut_source",
+      "晋级门 V2.last_frame 区分「未提供尾帧」并给出告警，不再误写 model supports the supplied last frame",
+      "doctor 增加尾帧缺失告警与超过 max_duration_s 的失败检查",
+      "test_video_api.py 不再使用 patch.dict(os.environ)：Windows 上宿主超长环境变量会触发 ValueError",
+      "references/source-intake.md 新增一条真实微信视频号分享链接的只读探测记录，明确授权边界",
+      "补 6 项离线测试（尾帧回退、人工切点、自动分段保护、缺尾帧告警、doctor 诊断）"
+    ],
+    "0.3.2": [
+      "复核 kangarooking/video-downloader 源码后修正外部适配器契约：新增 {out_dir} 目录模式，兼容 --output-dir 型工具把视频放在 provider 子目录、并在 stdout 返回 JSON 的形态",
+      "目录模式优先读取下载器 stdout 的 video_path，只接受 --out-dir 内的真实视频文件；否则递归扫描目录取视频并递归收集字幕；stdout 其它内容（签名 URL / token）一律不落盘",
+      "修复占位符校验逻辑：原实现用 and 判断 {url}/{out}，只写一个占位符也会放行；改为校验原始模板字符串，支持 --output={out_dir} 这类嵌入式占位符",
+      "新增 --downloader-scope adapter-only / VIDEO_RECREATE_DOWNLOADER_SCOPE：只让视频号等需要适配器的平台走外部模板，其它社媒仍用 yt-dlp",
+      "视频号拒绝信息写明 WX_CHANNELS_API_URL / WX_CHANNELS_API_TOKEN / WX_CHANNELS_COOKIE 三条授权路线；source-intake.md 补可直接使用的 video-downloader 对接命令与 --asr none --vision none 等注意事项",
+      "新增 7 项离线测试（占位符校验、嵌入式占位符、作用域、stdout JSON 解析、目录型适配器端到端、越界路径拒绝、拒绝信息）"
+    ]
+  },
+  "verification": {
+    "environment": "win32 / Python 3.10.6 / ffmpeg + ffprobe + yt-dlp 2026.07.04",
+    "offline_tests": "pass (75 tests)",
+    "real_local_video_smoke_test": "pass (20.064s / 720x1280 / 9:16 -> 3 shots, all first+last frames)",
+    "real_public_url_download": "pass (w3schools mov_bbb.mp4, 10.027s / 320x176, 20:11 ratio blocked by gate)",
+    "upstream_contract_probe": "pass (kangarooking/video-downloader download_video.py --asr none --vision none on a local mp4: --output-dir is a root, media in provider subfolder, stdout JSON carries video_path)",
+    "directory_adapter_smoke_test": "pass (fake upstream-shaped adapter -> fetch_source.py source.json -> breakdown -> manifest -> jobs -> dry-run, no network)",
+    "wechat_channels_link": "blocked as designed: SPA shell, yt-dlp Unsupported URL, YuanbaoAuthorization required; see references/source-intake.md",
+    "real_provider_calls": "not run (requires user API key)"
+  }
+}

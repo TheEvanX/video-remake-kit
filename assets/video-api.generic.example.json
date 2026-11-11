@@ -1,0 +1,32 @@
+{
+  "protocol": "generic_json",
+  "base_url": "https://YOUR_PROVIDER_HOST",
+  "model": "YOUR_MODEL_ID",
+  "api_key_env": "VIDEO_API_KEY",
+  "auth_header": "Authorization",
+  "auth_prefix": "Bearer ",
+  "submit_path": "/v1/video/generations",
+  "status_path": "/v1/video/tasks/{task_id}",
+  "task_id_field": "data.id",
+  "status_field": "data.status",
+  "video_url_field": "data.video_url",
+  "success_statuses": ["completed", "succeeded"],
+  "failure_statuses": ["failed", "cancelled", "expired"],
+  "image_mode": "url",
+  "supports_last_frame": true,
+  "min_duration_s": 4,
+  "max_duration_s": 10,
+  "supported_ratios": [],
+  "ratio_aliases": {},
+  "poll_interval_s": 5,
+  "poll_timeout_s": 1800,
+  "request_template": {
+    "model": "{{model}}",
+    "prompt": "{{prompt}}",
+    "duration": "{{duration}}",
+    "aspect_ratio": "{{aspect_ratio}}",
+    "first_frame_url": "{{first_frame}}",
+    "last_frame_url": "{{last_frame}}"
+  },
+  "media_urls": {}
+}
