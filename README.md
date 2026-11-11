@@ -4,7 +4,7 @@
 
 `video-remake-kit` is an Agent skill for **video breakdown and AI recreation**. It takes one input — a video URL or an `.mp4` — and produces an auditable chain of artifacts: `source.json` → `breakdown.json` → `manifest.json` → `jobs.json` → per-shot MP4 results. It is built for people who need to *reverse-engineer a video into reproducible shots*, not for summarizing what a video says.
 
-**Keywords**: video breakdown · shot list · shot-by-shot recreation · first frame / last frame · AI video generation · Seedance · Volcengine Ark · ffmpeg · yt-dlp · dry-run · Agent skill / WorkBuddy skill / Claude-style `SKILL.md`.
+**Keywords**: video breakdown · shot list · shot-by-shot recreation · first frame / last frame · AI video generation · Seedance · Volcengine Ark · ffmpeg · yt-dlp · dry-run · Agent skill / WorkBuddy skill / Claude-style `SKILL.md` · REA (Reverse Engineer Anything).
 
 ## What it does
 
@@ -46,6 +46,14 @@ python scripts/doctor.py --config video-api.local.json --jobs remake/jobs.json
 | Vendor | one model | Ark + generic JSON, configurable durations, ratios, frame support |
 
 The gate deliberately does **not** decide whether a shot is suitable for AI regeneration (real footage, screen recordings and UI text need a human). Those labels are always recorded as `v3_status: assumed`.
+
+## Relation to REA
+
+REA (**Reverse Engineer Anything**, [morluto/rea](https://github.com/morluto/rea)) is the idea behind a family of tools that reverse-engineer an artifact into evidence-backed components. Its video counterpart, [rea-video](https://github.com/JuneYaooo/rea-video), produces a shot-by-shot breakdown and a remake plan — and deliberately **does not render video**. Its standardised `Reel` breakdown package is meant to be read by downstream tools.
+
+`video-remake-kit` covers the next step: it turns such a breakdown into **per-shot AI video generation jobs**, with an objective promotion gate and a zero-cost `--dry-run` before any paid API call. In short, REA / rea-video *explain and plan*; this kit *submits, polls and collects per-shot results*. This repository is **inspired by REA and complementary to rea-video — it is not a fork, an official plugin, or affiliated with either project**.
+
+The breakdown stage is optional: if your shot list already matches the documented `breakdown.json` schema, you can start at `build_recreation_manifest.py` and go straight to `jobs.json`.
 
 ## FAQ
 
